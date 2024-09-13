@@ -9,7 +9,7 @@ const navIcons = [
 
 const Navbar = () => {
   return (
-    <header className="w-full py-4">
+    <header className="bg-yellow-400 w-full py-4">
       {" "}
       {/* Added padding to the top and bottom */}
       <nav className="nav flex items-center justify-between">
@@ -19,6 +19,21 @@ const Navbar = () => {
         </p>
 
         <div className="flex items-center gap-5">
+          <div>
+            <button className="hover:bg-blue-600 text-white font-bold py-1 px-2 border border-blue-700 rounded">
+              Amazon
+            </button>
+          </div>
+          <div>
+            <button className="hover:bg-blue-600 text-white font-bold py-1 px-2 border border-blue-700 rounded">
+              Amazon
+            </button>
+          </div>
+          <div>
+            <button className="hover:bg-blue-600 text-white font-bold py-1 px-2 border border-blue-700 rounded">
+              WatchList
+            </button>
+          </div>
           {navIcons.map((icon) => (
             <Link href="/sign-up" className="flex items-center gap-1">
               <Image
