@@ -9,9 +9,9 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
 }) => {
   return (
     <div
-      className={`information mt-2 block pt-10 flex flex-col items-center gap-10 px-20 py-20 mt-5 max-w-6xl max-h-5`} // Change max-width here
+      className={`information mt-2 block pt-10 flex-col items-center gap-10 px-20 py-20 max-h-5`} // Change max-width here
     >
-      <div className="flex flex-col md:flex-row items-center bg-white shadow-lg p-4 rounded-lg w-full">
+      <div className="flex flex-col md:flex-row items-center bg-white shadow-lg p-10 rounded-lg w-full ">
         {/* Product Image */}
         <div className="flex-initial w-auto md:w-1/3">
           <img
@@ -50,31 +50,22 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               <div className="price-info bg-gray-100 p-2 rounded-md text-center">
                 <div className="text-sm">Current Price</div>
-                <div className="font-bold">
-                  {scrapData.currency}
-                  {scrapData.currentPrice}
-                </div>
+                <div className="font-bold">{scrapData.price}</div>
               </div>
               <div className="price-info bg-gray-100 p-2 rounded-md text-center">
                 <div className="text-sm">Highest Price</div>
                 <div className="font-bold">
                   {scrapData.currency}
-                  {scrapData.originalPrice}
+                  {scrapData.originalPrice}.00
                 </div>
               </div>
               <div className="price-info bg-gray-100 p-2 rounded-md text-center">
                 <div className="text-sm">Average Price</div>
-                <div className="font-bold">
-                  {scrapData.currency}
-                  {scrapData.currentPrice}
-                </div>
+                <div className="font-bold">{scrapData.price}</div>
               </div>
               <div className="price-info bg-gray-100 p-2 rounded-md text-center">
                 <div className="text-sm">Lowest Price</div>
-                <div className="font-bold">
-                  {scrapData.currency}
-                  {scrapData.currentPrice}
-                </div>
+                <div className="font-bold">{scrapData.price}</div>
               </div>
             </div>
           </div>

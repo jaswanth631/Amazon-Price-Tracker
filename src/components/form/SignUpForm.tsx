@@ -153,17 +153,13 @@ import Link from "next/link";
 import GoogleSignInButton from "../GoogleSignInButton";
 import { useState } from "react";
 
-const formSchema = z.object({
-  myInput: z.string().transform(Number),
-});
-
 const FormSchema = z
   .object({
     email: z.string().min(1, "Email is required").email("Invalid email"),
     password: z
       .string()
       .min(1, "Password is required")
-      .min(8, "Password must have than 8 characters"),
+      .min(8, "Password must have at least 8 characters"),
     cPassword: z.string().min(1, "Password confirmation is required"),
   })
   .refine((data) => data.password === data.cPassword, {
@@ -172,8 +168,9 @@ const FormSchema = z
   });
 
 const SignUpForm = () => {
-  const [signUpSuccess, setSignUpSuccess] = useState(false); // State to handle success message
-
+  const [signUpSuccess, setSignUpSuccess] = useState(false); // Success state
+  const [errorMessage, setErrorMessage] = useState(""); // Error message for other errors
+  const [userExists, setUserExists] = useState(false); // User exists state
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -191,38 +188,36 @@ const SignUpForm = () => {
         cpassword: values.cPassword,
       };
 
-      const resp = await axios.post("http://localhost:3000/signup", postData);
-      console.log("Resp::", resp.data);
-      // If the request is successful, update the state to show the success message
-      if (resp.status === 200) {
+      const resp = await axios.post(
+        "http://localhost:3000/amazonPriceAlert/signup",
+        postData
+      );
+
+      if (resp.status === 200 || resp.status === 201) {
+        // Handle success
         setSignUpSuccess(true);
+        setErrorMessage("");
       }
-    } catch (error) {
-      console.error("Error::::", error);
+    } catch (error: any) {
+      if (error.response && error.response.status === 409) {
+        setUserExists(true); // Show modal if user already exists
+      } else {
+        setErrorMessage("An error occurred during sign-up. Please try again.");
+      }
     }
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      {signUpSuccess ? (
-        // Success Message
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-green-600">
-            Sign up successful!
-          </h2>
-          <p className="mt-2 text-gray-600">
-            Please{" "}
-            <Link className="text-blue-500 hover:underline" href="/sign-in">
-              sign in
-            </Link>{" "}
-            to continue.
-          </p>
-        </div>
-      ) : (
-        // Sign-Up Form
+    <div className="relative">
+      {/* Apply blur effect conditionally */}
+      <div
+        className={`w-full max-w-md mx-auto p-6 bg-white rounded-lg shadow-lg ${
+          userExists || signUpSuccess ? "blur-sm" : ""
+        }`}
+      >
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
-            <div className="space-y-2">
+            <div className="space-y-4">
               <FormField
                 control={form.control}
                 name="email"
@@ -230,7 +225,7 @@ const SignUpForm = () => {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="mail@sysbioz.com" {...field} />
+                      <Input placeholder="Enter your mail" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -271,14 +266,21 @@ const SignUpForm = () => {
                 )}
               />
             </div>
-            <Button className="w-full mt-6" type="submit">
+            <Button
+              className="w-full mt-6 bg-blue-500 hover:bg-blue-600 text-white"
+              type="submit"
+            >
               Sign up
             </Button>
           </form>
-          <div className="mx-auto my-4 flex w-full items-center justify-evenly before:mr-4 before:block before:h-px before:flex-grow before:bg-stone-400 after:ml-4 after:block after:h-px after:flex-grow after:bg-stone-400">
-            or
+          <div className="my-4 flex items-center justify-center space-x-4">
+            <div className="flex-grow h-px bg-gray-400"></div>
+            <span>or</span>
+            <div className="flex-grow h-px bg-gray-400"></div>
           </div>
-          <GoogleSignInButton>Sign up with Google</GoogleSignInButton>
+          <GoogleSignInButton className="w-full">
+            Sign up with Google
+          </GoogleSignInButton>
           <p className="text-center text-sm text-gray-600 mt-2">
             If you already have an account, please&nbsp;
             <Link className="text-blue-500 hover:underline" href="/sign-in">
@@ -286,6 +288,59 @@ const SignUpForm = () => {
             </Link>
           </p>
         </Form>
+      </div>
+
+      {/* Modal for Existing User */}
+      {userExists && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>{" "}
+          {/* Blurred background */}
+          <div className="relative bg-white p-6 rounded-lg shadow-lg max-w-sm z-50">
+            <h2 className="text-xl font-semibold text-red-500">
+              User Already Exists
+            </h2>
+            <p className="mt-2 text-gray-600">
+              This email is already registered. Please{" "}
+              <Link className="text-blue-500 hover:underline" href="/sign-in">
+                sign in
+              </Link>{" "}
+              to continue.
+            </p>
+            <Button
+              onClick={() => setUserExists(false)}
+              className="mt-4 w-full bg-red-500 hover:bg-red-600 text-white"
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal for Successful Sign Up */}
+      {signUpSuccess && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>{" "}
+          {/* Blurred background */}
+          <div className="relative bg-white p-6 rounded-lg shadow-lg max-w-sm z-50">
+            <h2 className="text-xl font-semibold text-green-500">
+              Sign Up Successful!
+            </h2>
+            <p className="mt-2 text-gray-600">
+              Welcome to <span className="text-red-500">Smart Shopper</span> 🚀.
+              Please{" "}
+              <Link className="text-blue-500 hover:underline" href="/sign-in">
+                sign in
+              </Link>{" "}
+              to continue.
+            </p>
+            <Button
+              onClick={() => setSignUpSuccess(false)}
+              className="mt-4 w-full bg-green-500 hover:bg-green-600 text-white"
+            >
+              Close
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );

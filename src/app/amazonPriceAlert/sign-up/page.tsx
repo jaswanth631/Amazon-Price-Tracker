@@ -1,8 +1,8 @@
-import SignUpForm from '@/components/form/SignUpForm';
+import SignUpForm from "@/components/form/SignUpForm";
 
 const page = () => {
   return (
-    <div className='w-full'>
+    <div className="">
       <SignUpForm />
     </div>
   );

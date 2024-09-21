@@ -23,7 +23,7 @@
 /* .nav-logo {
     @apply font-spaceGrotesk text-[21px] text-secondary font-bold;
   } */
-body {
+/* body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
       to bottom,
@@ -31,4 +31,22 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
+} */
+body {
+  background-color: #001f3f; /* Navy blue color */
+  color: white; /* Optional, to adjust text color */
+  margin: 3;
+  padding: ;
+  min-height: 100vh;
+  font-family: "YourFont", sans-serif;
+  height: max-content;
+}
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
