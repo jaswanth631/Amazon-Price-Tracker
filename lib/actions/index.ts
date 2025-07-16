@@ -7,25 +7,55 @@ import { scrapeAmazonProduct } from "../scraper";
 import { getAveragePrice, getHighestPrice, getLowestPrice } from "../utils";
 import { generateEmailBody, sendEmail } from "../nodemailer";
 import { User } from "../../types";
+import { z } from 'zod';
+
+// Zod schema for Amazon URL or ASIN
+const productInputSchema = z.object({
+  input: z.string().min(5, 'Please enter a valid Amazon URL or ASIN').refine(
+    (val) => {
+      // Basic check for Amazon URL or 10-char ASIN
+      return (
+        /^https?:\/\/(www\.)?amazon\./.test(val) || /^[A-Z0-9]{10}$/.test(val)
+      );
+    },
+    { message: 'Enter a valid Amazon product URL or ASIN' }
+  ),
+});
 
 export async function scrapeAndStoreProduct(productUrl: string) {
+  // Validate input
+  const parseResult = productInputSchema.safeParse({ input: productUrl });
+  if (!parseResult.success) {
+    throw new Error(parseResult.error.errors[0].message);
+  }
+
   if (!productUrl) return;
 
   try {
-    // connectToDB();
-
+    await connectToDB(); // Ensure DB connection
+    console.log('test213323123');
     const scrapedProduct = await scrapeAmazonProduct(productUrl);
+    console.log('[SCRAPER] Scraped product:', scrapedProduct);
 
-    if (!scrapedProduct) return;
+    if (!scrapedProduct) {
+      console.log('[SCRAPER] No product data returned from scraper.');
+      return;
+    }
 
     let product = scrapedProduct;
 
-    const existingProduct = await Product.findOne({ url: scrapedProduct.url });
+    // Use asin for lookup
+    const existingProduct = await Product.findOne({ asin: scrapedProduct.asin });
 
     if (existingProduct) {
       const updatedPriceHistory: any = [
         ...existingProduct.priceHistory,
-        { price: scrapedProduct.currentPrice },
+        {
+          price: scrapedProduct.currentPrice,
+          timestamp: new Date(),
+          sellerType: scrapedProduct.sellerType,
+          condition: 'New', // Default or scraped value
+        },
       ];
 
       product = {
@@ -35,16 +65,29 @@ export async function scrapeAndStoreProduct(productUrl: string) {
         highestPrice: getHighestPrice(updatedPriceHistory),
         averagePrice: getAveragePrice(updatedPriceHistory),
       };
+      console.log('[DB] Updating existing product:', scrapedProduct.asin);
+    } else {
+      // New product, initialize priceHistory
+      product.priceHistory = [{
+        price: scrapedProduct.currentPrice,
+        timestamp: new Date(),
+        sellerType: scrapedProduct.sellerType,
+        condition: 'New',
+      }];
+      console.log('[DB] Creating new product:', scrapedProduct.asin);
     }
 
+    // Use asin for upsert
     const newProduct = await Product.findOneAndUpdate(
-      { url: scrapedProduct.url },
+      { asin: scrapedProduct.asin },
       product,
       { upsert: true, new: true }
     );
+    console.log('[DB] Product saved:', newProduct?._id);
 
     revalidatePath(`/products/${newProduct._id}`);
   } catch (error: any) {
+    console.log('[ERROR] Failed to create/update product:', error);
     throw new Error(`Failed to create/update product: ${error.message}`);
   }
 }
